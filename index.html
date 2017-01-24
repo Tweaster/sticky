@@ -43,30 +43,27 @@
 
 	<script>
 
-
-		function onAppStart()
+		document.addEventListener('deviceready', function() 
 		{
-		  	initUI();
-		}
-	    
+			// Don't bother drawing UI when running in the background.
+			if (cordova.backgroundapp.resumeType == 'launch') 
+			{
+				initService();
+				initUI();
+			} 
+		});
 
-	    document.addEventListener("deviceready", onAppStart, false);
+        document.addEventListener('resume', function() 
+		{
+			if (cordova.backgroundapp.resumeType == 'normal-launch') 
+			{
+				initService();
+				initUI();
+			}
+		});
 
-	    $(document).ready(function() 
-	    {
-	        // are we running in native app or in a browser?
-	        window.isphone = false;
-	        if(document.URL.indexOf("http://") === -1 
-	            && document.URL.indexOf("https://") === -1) 
-	        {
-	            window.isphone = true;
-	        }
 
-	        if( !window.isphone ) 
-	        {
-	            onAppStart();
-	        }
-	    });
+
 
 	</script>
 
@@ -87,6 +84,7 @@
 		</ul>	
 		</div>
 	</header>
+	<div class="wallpaper-backdrop"></div>
 	<div class="bar bar-standard bar-header-secondary">
 		<form class="input-group">
 			<div class="input-row">

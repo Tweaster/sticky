@@ -268,6 +268,15 @@ var HABITS = {};
 	}
 
 
+	getTimeToNextReminder()
+	{
+		if (!this._reminderActive)
+			return -1;
+
+		
+	}
+
+
 	/* ------------------------------------------------------------- *
 	 * method: getFrequency() returns the frequency for this Routine
 	 * ------------------------------------------------------------- */

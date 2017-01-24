@@ -1,5 +1,6 @@
 
-var pushNotifier = null;
+var NOTIFICATIONDICT = {};
+
 
 function generateEntryHTML(routineObj)
 {
@@ -216,6 +217,7 @@ function validateNewReminder()
   		{
   			routine.setReminder(newVal);
   			commitChanges();
+  			initNotificationService();
   			editEntryHTML(id);
   		}
   	}
@@ -409,7 +411,7 @@ function buildStatsChart()
               "position": "left",
               "title": "stats over the past 90 days",
           }],
-          "startDuration": 1,
+          "startDuration": 0,
           "graphs": [{
               "balloonText": "« [[caption]] »: [[value]] times i.e [[percentage]]",
               "fillAlphas": 0.3,
@@ -497,8 +499,6 @@ function buildRoutinePieChart(routine)
       "mouseWheelScrollEnabled": false,
       "valueField": "amount",
       "titleField": "title",
-      "startEffect": "elastic",
-      "startDuration": 2,
       "labelRadius": 5,
       "innerRadius": "50%",
       "depth3D": 20,
@@ -515,26 +515,7 @@ function buildRoutinePieChart(routine)
 
 
 
-function testNotification()
-{
-	if (pushNotifier !== null)
-	{
-		var gcm = require('node-gcm');
-		// Replace these with your own values.
-		var apiKey = "AAAAYAXUT0w:APA91bGgv004NmaTdXqz-1ML79h1F7nKsFh_mzfhC8Er_L7eWLXJyRuwgQQPuPfQZnEtWQ7gwy9RGVEWJMQNuzv3G7rfcMNjXCpMXip_qt1fO00R4hzXGlF_kbtwvj7yde2axfXmnWeH";
-		var deviceID =  device.uuid;
-		var service = new gcm.Sender(apiKey);
-		var message = new gcm.Message();
-		message.addData('title', {"locKey": "push_app_title"});
-		message.addData('message', 'Simple non-localizable text for message!');
-		// Constant with formatted params
-		// message.addData('message', {"locKey": "push_message_fox", "locData": ["fox", "dog"]});
-		service.send(message, { registrationTokens: [ deviceID ] }, function (err, response) {
-		    if(err) console.error(err);
-		    else    console.log(response);
-		});
-	}
-}
+
 
 
 /******************************** CLICK HANDLING ****************************/
@@ -637,8 +618,6 @@ function clickPerformed(evt)
 		$("#stats-content").animate({ marginLeft : 0 }, 600);
 		fadeTopEntryInput("out");
 
-		testNotification();
-
 
 		setTimeout(
 			function() {
@@ -667,6 +646,7 @@ function clickPerformed(evt)
 		{
 			routine.setIsWorkingDay(day, isChecked);
 			commitChanges();
+			initNotificationService();
 		}
 		
 	}
@@ -677,10 +657,6 @@ function clickPerformed(evt)
 		var day = $(lastClickedObject).attr("data-day");
 		var id = $(lastClickedObject).attr("data-source");
 
-		if (pushNotifier !== null)
-		{
-
-		}
 
 		var routine = HABITS[id];
 		if (routine !== null && (routine instanceof Routine))
@@ -752,41 +728,144 @@ function clickPerformed(evt)
 	
 }
 
+
+
+/******************************** CHROME ALARM & NOTIFICATION ****************************/
+
+
+function isChromeAlarmsAvailable()
+{
+	if (typeof(chrome) !== "undefined")
+	{
+		if (typeof(chrome.alarms) !== "undefined")
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+function createNotification(id) 
+{
+	if (isChromeAlarmsAvailable())
+	{
+		var routine = HABITS[id];
+
+		if (routine !== null && (routine instanceof Routine))
+		{
+			var opts = {
+				message: '"' + routine.getCaption() + '" scheduled at' + routine.getReminder(),
+				title: 'Reminder',
+				type: 'basic',
+				iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
+			};
+
+			chrome.notifications.create(id, opts, function(notificationId) { });
+		}
+	}
+}
+
+function createAlarm(id, date) 
+{
+	if (isChromeAlarmsAvailable())
+	{
+	  var expectedFireTime = date.getTime();
+	  chrome.alarms.create(id , { when: expectedFireTime });
+	}
+}
+
+function registerAlarm(routine)
+{
+	var presentTime = new Date();
+	var index = dateAsIndex(presentTime);
+	var daysAhead = 0;
+	
+	while (routine._expectation[index] !== 1)
+	{
+		index++;
+		daysAhead++;
+	}
+
+	var tmp = new Date(presentTime.getTime() + daysAhead * 86400000);
+	tmp = new Date(Date.parse(tmp.toString().substr(0, 16) + routine.getReminder() + ":00"));
+
+	if (presentTime.getTime() > tmp.getTime())
+	{
+		index++;
+		daysAhead++;
+		while (routine._expectation[index] !== 1)
+		{
+			index++;
+			daysAhead++;
+		}
+
+		tmp = new Date(presentTime.getTime() + daysAhead * 86400000);
+		tmp = new Date(Date.parse(tmp.toString().substr(0, 16) + routine.getReminder() + ":00"));
+		createAlarm(routine.id(), tmp);
+		
+		NOTIFICATIONDICT[routine.id()] = tmp.getTIme();
+	}
+
+}
+
+
+
 /******************************** UI INITIALIZATION ****************************/
 
-function initUI()
+
+function initService()
 {
+	HABITS = {};
+
 	var data = localStorage.getItem(app_id + ".data");
 	if (typeof(data) !== "undefined" && data !== null)
 	{
+
+		if (isChromeAlarmsAvailable())
+		{
+			chrome.alarms.clearAll();
+			chrome.alarms.onAlarm.addListener(function(alarm) {
+			    log("Received alarm: " + alarm.name + '. Creating notification.');
+			    createNotification(alarm.name);
+			  });
+		}
+
 		var tmp = decodeData(data);
 		for (key in tmp)
 		{
 			var routine = new Routine(tmp[key]);
 		}
 
-		reconstructListView();
-
-
-		if (typeof(PushNotification) !== "undefined")
-		{
-			pushNotifier = PushNotification.init({
-			    android: {
-			        senderID: "412414660428"
-			    },
-			    browser: {
-			        pushServiceURL: 'http://push.api.phonegap.com/v1/push'
-			    },
-			    ios: {
-			        alert: "true",
-			        badge: "true",
-			        sound: "true"
-			    },
-			    windows: {}
-			});
-		}
-
-
+		initNotificationService();
 	}
+}
+
+function initNotificationService()
+{
+	if (isChromeAlarmsAvailable())
+	{
+		NOTIFICATIONDICT = {};
+
+		for (key in HABITS)
+		{
+			var routine = HABITS[key];
+
+			if (routine !== null && (routine instanceof Routine))
+			{
+				if (routine.getIsReminderActive())
+				{
+					registerAlarm();
+				}
+			}
+		}
+	}
+	
+}
+
+function initUI()
+{
+
+	reconstructListView();
+
 	$("body").unbind().click(clickPerformed);
 }
