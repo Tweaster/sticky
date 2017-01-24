@@ -47,46 +47,18 @@
 
 		document.addEventListener('deviceready', function() 
 		{
-			// Don't bother drawing UI when running in the background.
-			if (typeof(cordova) === "undefined")
-            {
-                alert("no cordova");
-            }
-            else if (typeof(cordova.backgroundapp) === "undefined")
-            {
-                alert("no cordova.backgroundapp");
-            }
-            else if (typeof(cordova.backgroundapp.resumeType) === "undefined")
-            {
-                alert("no cordova.backgroundapp.resumeType");
-            }
-
-
-            if (typeof(chrome) === undefined)
-            {
-            	alert("no chrome");
-            }
-            else
-            {
-            	if (typeof(chrome.alarms) === undefined)
-	            {
-	            	alert("no chrome.alarms");
-	            }
-
-	            if (typeof(chrome.notifications) === undefined)
-	            {
-	            	alert("no chrome.notifications");
-	            }
-            }
-
-			//if (cordova.backgroundapp.resumeType == 'launch') 
-			//{
+			if (cordova.backgroundapp.resumeType == 'launch') 
+			{
 				initService();
 				initUI();
-			//} 
+			} 
+			else
+			{
+				initService();
+			}
 		});
 
-		/*
+		
         document.addEventListener('resume', function() 
 		{
 			if (cordova.backgroundapp.resumeType == 'normal-launch') 
@@ -94,8 +66,12 @@
 				initService();
 				initUI();
 			}
+			else
+			{
+				initService();
+			}
 		});
-		*/
+		
 
 
 

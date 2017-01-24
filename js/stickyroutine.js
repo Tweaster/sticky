@@ -854,7 +854,7 @@ function initNotificationService()
 			{
 				if (routine.getIsReminderActive())
 				{
-					registerAlarm();
+					registerAlarm(routine);
 				}
 			}
 		}
