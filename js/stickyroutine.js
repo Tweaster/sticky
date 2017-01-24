@@ -803,7 +803,7 @@ function registerAlarm(routine)
 		tmp = new Date(Date.parse(tmp.toString().substr(0, 16) + routine.getReminder() + ":00"));
 		createAlarm(routine.id(), tmp);
 		
-		NOTIFICATIONDICT[routine.id()] = tmp.getTIme();
+		NOTIFICATIONDICT[routine.id()] = tmp.getTime();
 	}
 
 }
