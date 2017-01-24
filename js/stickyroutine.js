@@ -207,20 +207,20 @@ function validateNewCaption(event)
 
 function validateNewReminder()
 {
-	if (event.type == 'keydown' && (event.which == 13 || event.which == 9))
-  	{
-  		var newVal = $("#entry-reminder-input").val();
-  		var id = $("#entry-reminder-input").attr("data-source");
-  		var routine = HABITS[id];
+	var newVal = $("#entry-reminder-input").val();
+	var id = $("#entry-reminder-input").attr("data-source");
+	var routine = HABITS[id];
 
-  		if (routine !== null && (routine instanceof Routine))
-  		{
-  			routine.setReminder(newVal);
-  			commitChanges();
-  			initNotificationService();
-  			editEntryHTML(id);
-  		}
-  	}
+	if (routine !== null && (routine instanceof Routine))
+	{
+		if (newVal !== "--:--")
+		{
+			routine.setReminder(newVal);
+			commitChanges();
+			initNotificationService();
+			editEntryHTML(id);
+		}
+	}
 }
 
 
@@ -301,7 +301,7 @@ function editEntryHTML(id)
 
 
 				$("#entry-caption-input").unbind().keydown(validateNewCaption);
-				$("#entry-reminder-input").unbind().keydown(validateNewReminder);
+				$("#entry-reminder-input").on('input', validateNewReminder);
 				$("#entry-interval-input").unbind().keydown(validateNewInterval);
 			},
 			100
