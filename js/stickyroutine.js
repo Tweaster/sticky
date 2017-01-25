@@ -210,16 +210,22 @@ function validateNewCaption(event)
 function validateNewReminder()
 {
 	var newVal = $("#entry-reminder-input").val();
-	var id = $("#entry-reminder-input").attr("data-source");
-	var routine = HABITS[id];
 
-	if (routine !== null && (routine instanceof Routine))
+	if (newVal !== "--:--")
 	{
-		if (newVal !== "--:--")
+		var id = $("#entry-reminder-input").attr("data-source");
+		var routine = HABITS[id];
+
+		if (routine !== null && (routine instanceof Routine))
 		{
+			if (newVal === routine.getReminder())
+				return;
+		
 			routine.setReminder(newVal);
 			commitChanges();
-			initNotificationService();
+			if (routine.getIsReminderActive())
+				initNotificationService();
+
 			editEntryHTML(id);
 		}
 	}
@@ -528,6 +534,10 @@ function buildRoutinePieChart(routine)
 
 function isChromeAlarmsAvailable()
 {
+
+	return true;
+
+
 	if (typeof(chrome) !== "undefined")
 	{
 		if (typeof(chrome.alarms) !== "undefined")
@@ -553,7 +563,7 @@ function createNotification(id)
 				iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
 			};
 
-			/*
+			
 			chrome.notifications.create(guid(), opts, function(notificationId) { 
 				setTimeout(
 					function()
@@ -563,10 +573,12 @@ function createNotification(id)
 					30000
 				);
 			});
-			*/
+			
 
+
+			/*
 			navigator.notification.beep(1);
-			navigator.notification.vibrate(2000);
+			//navigator.notification.vibrate(2000);
 			navigator.notification.alert(
                 opts.message,         // message
                 function(notificationId) { 
@@ -581,17 +593,32 @@ function createNotification(id)
                 opts.title,           // title
                 'Ok'                  // buttonName
             );
+			*/
 		}
 	}
 }
 
 function createAlarm(id, date) 
 {
+	
 	if (isChromeAlarmsAvailable())
 	{
-	  var expectedFireTime = date.getTime();
-	  chrome.alarms.create(id , { when: expectedFireTime });
+	    var expectedFireTime = date.getTime();
+	    chrome.alarms.create(id , { when: expectedFireTime });
+	
+		/*
+		var timeout = date.getTime() - Date.now();
+	
+		return setTimeout(
+			function()
+			{
+				createNotification(id);
+			},
+			timeout
+		);
+*/
 	}
+	return date.toString();
 }
 
 function registerAlarm(routine)
@@ -621,26 +648,17 @@ function registerAlarm(routine)
 
 		tmp = new Date(presentTime.getTime() + daysAhead * 86400000);
 		tmp = new Date(Date.parse(tmp.toString().substr(0, 16) + routine.getReminder() + ":00"));
-		createAlarm(routine.id(), tmp);
-		
-		NOTIFICATIONDICT[routine.id()] = tmp.getTime();
 	}
+
+	NOTIFICATIONDICT[routine.id()] = createAlarm(routine.id(), tmp);
 
 }
 
-
-
-/******************************** UI INITIALIZATION ****************************/
-
-
-function initService()
+function initNotificationService()
 {
-	HABITS = {};
-
-	var data = localStorage.getItem(app_id + ".data");
-	if (typeof(data) !== "undefined" && data !== null)
+	if (isChromeAlarmsAvailable())
 	{
-
+		
 		if (isChromeAlarmsAvailable())
 		{
 			chrome.alarms.clearAll();
@@ -649,21 +667,15 @@ function initService()
 			    createNotification(alarm.name);
 			  });
 		}
+		
 
-		var tmp = decodeData(data);
-		for (key in tmp)
+		/*
+		for (key in NOTIFICATIONDICT)
 		{
-			var routine = new Routine(tmp[key]);
+			clearTimeout(NOTIFICATIONDICT[key]);
 		}
+		*/
 
-		initNotificationService();
-	}
-}
-
-function initNotificationService()
-{
-	if (isChromeAlarmsAvailable())
-	{
 		NOTIFICATIONDICT = {};
 
 		for (key in HABITS)
@@ -681,6 +693,33 @@ function initNotificationService()
 	}
 	
 }
+
+
+
+/******************************** UI INITIALIZATION ****************************/
+
+
+function initService()
+{
+	HABITS = {};
+
+	var data = localStorage.getItem(app_id + ".data");
+	if (typeof(data) !== "undefined" && data !== null)
+	{
+
+
+
+		var tmp = decodeData(data);
+		for (key in tmp)
+		{
+			var routine = new Routine(tmp[key]);
+		}
+
+		initNotificationService();
+	}
+}
+
+
 
 function initUI()
 {
@@ -833,7 +872,6 @@ function clickPerformed(evt)
 		{
 			routine.setIsWorkingDay(day, isChecked);
 			commitChanges();
-			initNotificationService();
 		}
 		
 	}
@@ -910,6 +948,7 @@ function clickPerformed(evt)
 			routine.setReminderActive(isChecked);
 			commitChanges();
 			editEntryHTML(id);
+			initNotificationService();
 		}
 	}
 	
