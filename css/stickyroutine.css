@@ -777,6 +777,12 @@ span.daily-round-circle:hover, span.monthly-round-circle:hover, span.failure-rou
 	width: 100%;
 }
 
+#routine-pie-chart
+{
+  margin-top: 40px;
+  margin-left: -60px;
+}
+
 
 
 #theme-popover
@@ -791,7 +797,11 @@ span.daily-round-circle:hover, span.monthly-round-circle:hover, span.failure-rou
   margin-top: 60px;
   z-index: 50;
   padding: 15px;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(60, 60, 60, 1);
+  border-radius: 6px;
+  -webkit-box-shadow: -1px 3px 26px 6px rgba(0,0,0,0.44);
+    -moz-box-shadow: -1px 3px 26px 6px rgba(0,0,0,0.44);
+    box-shadow: -1px 3px 26px 6px rgba(0,0,0,0.44);
 }
 
 #theme-popover > img

@@ -294,10 +294,10 @@ function editEntryHTML(id)
 				<h5><img src="images/current.png">Current streak: {2}</h5>
 				<h5><img src="images/trophy.png">Longest streak: {3}</h5>
 			</div>
-
+	
+			{6}
 			<div id="routine-pie-chart">
 			</div>
-			{6}
 
 		</div>
 
@@ -319,9 +319,10 @@ function editEntryHTML(id)
 		
 		setTimeout(
 			function() {
-				//var w = Math.floor($(window).width() * 0.4);
-				//$("#routine-pie-chart").css("height", w.toString() + "px");
-				//buildRoutinePieChart(routine);
+				var w = Math.floor($(window).width() + 60);
+				$("#routine-pie-chart").css("width", w.toString() + "px");
+				$("#routine-pie-chart").css("height", (w * 0.4).toString() + "px");
+				buildRoutinePieChart(routine);
 
 
 				$("#entry-caption-input").unbind().keydown(validateNewCaption);
@@ -391,7 +392,7 @@ function generateStatsChartData()
 			var successCount = 0;
 			var failureCount = 0;
 			var expectedCount = 0;
-			for (var i = 0; i < 90; i++)
+			for (var i = 0; i < 60; i++)
 			{
 				if (routine._rec[index] === 1)
 					successCount++;
@@ -433,7 +434,7 @@ function buildStatsChart()
           "valueAxes": [{
               "stackType": "3d",
               "position": "left",
-              "title": "stats over the past 90 days",
+              "title": "stats over the past 60 days",
           }],
           "startDuration": 0,
           "graphs": [{
@@ -560,7 +561,7 @@ function buildTendencyChart()
         },
 
         "valueAxes": [ {
-          "title": "Performance over the past 90 days",
+          "title": "Performance over the past 60 days",
           "titleColor" : "#FFFFFF",
           "axisAlpha": 0,
           "position": "left",
@@ -589,18 +590,12 @@ function buildTendencyChart()
         {
           "id": "graph2",
           "balloonText": "<span style='font-size:12px;'>[[title]] in the [[category]]:<br><span style='font-size:20px;'>[[value]]</span> [[additional]]</span>",
-          "bullet": "square",
-          "lineThickness": 3,
-          "bulletSize": 7,
-          "bulletBorderAlpha": 1,
-          "useLineColorForBulletBorder": true,
-          "bulletBorderThickness": 3,
           "fillAlphas": 0.4,
           "lineAlpha": 1,
           "title": "Success",
           "valueField": "success",
           "lineColor" : "#56b943",
-          "type": "smoothedLine",
+          "type": "column",
           "startDuration": 0,
           "dashLengthField": "dashLengthLine"
         },
@@ -632,7 +627,7 @@ function buildTendencyChart()
         }
       } );
 
-	tendencyBarChart.dataProvider = generatePerformanceChartData(91, 7);
+	tendencyBarChart.dataProvider = generatePerformanceChartData(60, 7);
   	tendencyBarChart.validateData();
 
 
@@ -647,9 +642,10 @@ function generateRoutineChartData(routine)
 	var failureCount = 0;
 
 	var d = new Date();
+	var day = d.getDate();
 	var index = dateAsIndex(d);
 	var count = 0;
-	while (index >= 0)
+	while (index >= 0 && day > 0)
 	{
 		if (routine._expectation[index] === 1)
 		{
@@ -659,6 +655,7 @@ function generateRoutineChartData(routine)
 				failureCount++;
 		}
 		index--;
+		day--;
 	}
 
 	chartData.push({
