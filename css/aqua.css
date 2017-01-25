@@ -1,0 +1,4 @@
+.wallpaper-backdrop, .bar-header-secondary {
+  background-size: cover;
+  background: url("../images/bg04.png") no-repeat center;
+}

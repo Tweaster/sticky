@@ -93,6 +93,9 @@
 			<li id="menu-item-calendar-view">calendar</li>
 			<li id="menu-item-stats-view">stats</li>
 		</ul>	
+		<div id="ui-btn-settings-container">
+              <a href="#" class="btn-settings"><img src="images/settings.png" class="btn-settings"></a>
+        </div>
 		</div>
 	</header>
 	<div class="wallpaper-backdrop"></div>
@@ -128,39 +131,20 @@
 	</div>
 	<div id="menu-popover" class="popover">
 		<ul class="table-view">
-			<li class="table-view-cell">Menu 1</li>
-			<li class="table-view-cell">Menu 2</li>
-			<li class="table-view-cell">Menu 3</li>
-			<li class="table-view-cell">Menu 4</li>
+			
 		</ul>
 	</div>
 
-
-	<!-- Settings modal dialog -->
-
-	<!--div id="setting-dialog" class="modal fade" role="dialog">
-	  <div class="modal-dialog">
-
-	    
-	    <div class="modal-content">
-	      <div class="modal-header" >
-	        <button type="button" class="close" data-dismiss="modal">&times;</button>
-	        <h4 class="modal-title">Settings</h4>
-	      </div>
-	      <div class="modal-body" id="setting-dialog-content">
-
-			<p>some content in here</p>	        
-	          
-	      </div>
-
-	      <div class="modal-footer">
-	        <a class="validate-modal-dialog" data-dismiss="modal" href="#" id="btn-validate-settings">Validate</a>
-	      </div>
-	    </div>
-
-	  </div>
-	</div-->
-
+	<div id="theme-popover" class="ui-screen-hidden">
+		<label>Choose theme: </label>
+		<select id="theme-popover-combo">
+			<option value="bg01">Blue</option>
+			<option value="bg04">Aqua</option>
+			<option value="bg06">Purple</option>
+		</select>
+		<img src="res/icon/android/drawable-xhdpi-icon.png">
+		<p>Sticky Routine - By Fabrice Rasoamiaramanana</p>
+	</div>
 
 
 </body>

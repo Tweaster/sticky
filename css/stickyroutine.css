@@ -4,6 +4,29 @@ body{
 	color: #bbb;
 }
 
+*
+{
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#ui-btn-settings-container {
+    position: fixed;
+    left: 100%;
+    height: 30px;
+    width: 30px;
+    margin-top: -15px;
+    outline-width: 0px;
+}
+
+#ui-btn-settings-container > a {
+    margin-left: -40px;
+    outline-width: 0px;
+}
+
 .wallpaper-backdrop {
   position: fixed;
   top: 0;
@@ -215,6 +238,7 @@ input.pull-left:-moz-placeholder { /* Firefox 4 - 18 */
 #routine-detail-content {
 	padding: 80px 15px 25px 15px;
 	margin-left: -100%;
+  overflow-x: hidden; 
 }
 
 
@@ -577,6 +601,7 @@ button.fc-state-active
 .routine-details-container
 {
 	display: block;
+  overflow-x: hidden;
 }
 
 
@@ -752,6 +777,38 @@ span.daily-round-circle:hover, span.monthly-round-circle:hover, span.failure-rou
 	width: 100%;
 }
 
+
+
+#theme-popover
+{
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 80%;
+  height: 250px;
+  margin-left: 10%;
+  margin-right: 10%;
+  margin-top: 60px;
+  z-index: 50;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+#theme-popover > img
+{
+  padding: auto;
+  margin: auto;
+}
+
+#theme-popover > p
+{
+  text-align: center;
+}
+
+#theme-popover-combo-button > span 
+{
+  display: none;
+}
 
 
 

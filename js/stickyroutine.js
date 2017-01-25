@@ -190,11 +190,27 @@ function historyLogHTML(routine)
 	return html;
 }
 
+function createNewEntry(event)
+{
+	if (event.type == 'keydown' && (event.which == 13 || event.which == 9))
+  	{
+  		var caption = $('input.pull-left').val();
+		if (caption !== "")
+		{
+			var newRoutine = new Routine(caption);
+			var html = generateEntryHTML(newRoutine);
+			$('input.pull-left').val("");
+			$("ul.table-view").append(html);
+			commitChanges();
+		}
+  	}
+}
+
 function validateNewCaption(event)
 {
 	if (event.type == 'keydown' && (event.which == 13 || event.which == 9))
   	{
-  		var newVal = $("#entry-caption-input").text();
+  		var newVal = $("#entry-caption-input").val();
   		var id = $("#entry-caption-input").attr("data-source");
   		var routine = HABITS[id];
 
@@ -224,7 +240,7 @@ function validateNewReminder()
 			routine.setReminder(newVal);
 			commitChanges();
 			if (routine.getIsReminderActive())
-				initNotificationService();
+				reinitializeNotificationService();
 
 			editEntryHTML(id);
 		}
@@ -553,7 +569,7 @@ function createNotification(id)
 	{
 		var opts = {
 			message: '"' + routine.getCaption() + '" scheduled at' + routine.getReminder(),
-			title: 'Reminder',
+			title: 'Sticky Routine - Reminder',
 			type: 'basic',
 			iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
 		};
@@ -564,7 +580,7 @@ function createNotification(id)
 				setTimeout(
 					function()
 					{
-						initNotificationService(); 
+						reinitializeNotificationService(); 
 					},
 					35000
 				);
@@ -580,7 +596,7 @@ function createNotification(id)
 				setTimeout(
 					function()
 					{
-						initNotificationService(); 
+						reinitializeNotificationService(); 
 					},
 					30000
 				);
@@ -622,7 +638,12 @@ function registerAlarm(routine)
 	while (routine._expectation[index] !== 1)
 	{
 		index++;
+		if (index > 365)
+			index = 0;
+
 		daysAhead++;
+		if (daysAhead > 15)
+			return;
 	}
 
 	var tmp = new Date(presentTime.getTime() + daysAhead * 86400000);
@@ -635,18 +656,24 @@ function registerAlarm(routine)
 		while (routine._expectation[index] !== 1)
 		{
 			index++;
+			if (index > 365)
+				index = 0;
+
 			daysAhead++;
+			if (daysAhead > 15)
+				return;
 		}
 
 		tmp = new Date(presentTime.getTime() + daysAhead * 86400000);
 		tmp = new Date(Date.parse(tmp.toString().substr(0, 16) + routine.getReminder() + ":00"));
 	}
 
-	NOTIFICATIONDICT[routine.id()] = createAlarm(routine.id(), tmp);
+	if (presentTime.getTime() < tmp.getTime())
+		NOTIFICATIONDICT[routine.id()] = createAlarm(routine.id(), tmp);
 
 }
 
-function initNotificationService()
+function reinitializeNotificationService()
 {
 
 	if (isChromeAlarmsAvailable())
@@ -700,19 +727,40 @@ function initService()
 			var routine = new Routine(tmp[key]);
 		}
 
-		initNotificationService();
+		reinitializeNotificationService();
 	}
+}
+
+function applyTheme(val)
+{
+	if (typeof(val) === "undefined" || val === null)
+	{
+		val = localStorage.getItem(app_id + ".theme");
+		if (typeof(val) === "undefined" || val === null)
+			val = "bg04";
+	}
+	localStorage.setItem(app_id + ".theme", val);
+	$(".wallpaper-backdrop, .bar-header-secondary").css("background",  'url("images/' + val +  '.png") no-repeat center');
+	$(".wallpaper-backdrop, .bar-header-secondary").css("background-size", "cover");
 }
 
 
 
 function initUI()
 {
-
+	applyTheme();
 	reconstructListView();
 
 	$("body").unbind().click(clickPerformed);
 	$("body").bind("taphold", tapholdEventHandler);
+	$("input.pull-left").unbind().keydown(createNewEntry);
+	$("select#theme-popover-combo").change(
+		function()
+		{
+			applyTheme($("select#theme-popover-combo").val());
+			$("div#theme-popover").addClass("ui-screen-hidden");
+		}
+	);
 }
 
 /******************************** CLICK HANDLING ****************************/
@@ -721,8 +769,15 @@ function clickPerformed(evt)
 {
 	lastClickedObject = $(evt.target);
 
+	// settings
+	if (lastClickedObject.is(".btn-settings"))
+	{
+		$("div#theme-popover").toggleClass("ui-screen-hidden");
+		$("select#theme-popover-combo").val(localStorage.getItem(app_id + ".theme"));
+	}
+
 	// add new entry
-	if (lastClickedObject.is("span.icon.icon-plus") || lastClickedObject.is('button.btn.btn-primary.pull-right'))
+	else if (lastClickedObject.is("span.icon.icon-plus") || lastClickedObject.is('button.btn.btn-primary.pull-right'))
 	{
 		var caption = $('input.pull-left').val();
 		if (caption !== "")
@@ -856,6 +911,7 @@ function clickPerformed(evt)
 		if (routine !== null && (routine instanceof Routine))
 		{
 			routine.setIsWorkingDay(day, isChecked);
+			reinitializeNotificationService();
 			commitChanges();
 		}
 		
@@ -889,6 +945,7 @@ function clickPerformed(evt)
 		{
 			routine.setFrequency("DAILY");
 			commitChanges();
+			reinitializeNotificationService();
 			editEntryHTML(id);
 		}
 		
@@ -903,6 +960,7 @@ function clickPerformed(evt)
 		{
 			routine.setFrequency("MONTHLY");
 			commitChanges();
+			reinitializeNotificationService();
 			editEntryHTML(id);
 		}
 		
@@ -917,6 +975,7 @@ function clickPerformed(evt)
 		{
 			routine.setFrequency("INTERVAL");
 			commitChanges();
+			reinitializeNotificationService();
 			editEntryHTML(id);
 		}
 		
@@ -933,7 +992,7 @@ function clickPerformed(evt)
 			routine.setReminderActive(isChecked);
 			commitChanges();
 			editEntryHTML(id);
-			initNotificationService();
+			reinitializeNotificationService();
 		}
 	}
 	
