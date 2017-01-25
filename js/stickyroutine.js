@@ -10,7 +10,9 @@ function generateEntryHTML(routineObj)
 					<input type="checkbox" value="" id="{0}" name="item[]" {2}/>
 					<label for="{0}"></label>
 				</div>
+				<div class="delete-entry ui-screen-hidden" data-source="{0}"></div>
 				 {1}
+				
 				<span class="btn btn-outlined" data-source="{0}">{3}</span>
 			</li>
 	`;
@@ -518,6 +520,177 @@ function buildRoutinePieChart(routine)
 
 
 
+
+
+
+/******************************** CHROME ALARM & NOTIFICATION ****************************/
+
+
+function isChromeAlarmsAvailable()
+{
+	if (typeof(chrome) !== "undefined")
+	{
+		if (typeof(chrome.alarms) !== "undefined")
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+function createNotification(id) 
+{
+	if (isChromeAlarmsAvailable())
+	{
+		var routine = HABITS[id];
+
+		if (routine !== null && (routine instanceof Routine))
+		{
+			var opts = {
+				message: '"' + routine.getCaption() + '" scheduled at' + routine.getReminder(),
+				title: 'Reminder',
+				type: 'basic',
+				iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
+			};
+
+			/*
+			chrome.notifications.create(guid(), opts, function(notificationId) { 
+				setTimeout(
+					function()
+					{
+						initNotificationService(); 
+					},
+					30000
+				);
+			});
+			*/
+
+			navigator.notification.beep(1);
+			navigator.notification.vibrate(2000);
+			navigator.notification.alert(
+                opts.message,         // message
+                function(notificationId) { 
+					setTimeout(
+						function()
+						{
+							initNotificationService(); 
+						},
+						30000
+					);
+				},                 // callback
+                opts.title,           // title
+                'Ok'                  // buttonName
+            );
+		}
+	}
+}
+
+function createAlarm(id, date) 
+{
+	if (isChromeAlarmsAvailable())
+	{
+	  var expectedFireTime = date.getTime();
+	  chrome.alarms.create(id , { when: expectedFireTime });
+	}
+}
+
+function registerAlarm(routine)
+{
+	var presentTime = new Date();
+	var index = dateAsIndex(presentTime);
+	var daysAhead = 0;
+	
+	while (routine._expectation[index] !== 1)
+	{
+		index++;
+		daysAhead++;
+	}
+
+	var tmp = new Date(presentTime.getTime() + daysAhead * 86400000);
+	tmp = new Date(Date.parse(tmp.toString().substr(0, 16) + routine.getReminder() + ":00"));
+
+	if (presentTime.getTime() > tmp.getTime())
+	{
+		index++;
+		daysAhead++;
+		while (routine._expectation[index] !== 1)
+		{
+			index++;
+			daysAhead++;
+		}
+
+		tmp = new Date(presentTime.getTime() + daysAhead * 86400000);
+		tmp = new Date(Date.parse(tmp.toString().substr(0, 16) + routine.getReminder() + ":00"));
+		createAlarm(routine.id(), tmp);
+		
+		NOTIFICATIONDICT[routine.id()] = tmp.getTime();
+	}
+
+}
+
+
+
+/******************************** UI INITIALIZATION ****************************/
+
+
+function initService()
+{
+	HABITS = {};
+
+	var data = localStorage.getItem(app_id + ".data");
+	if (typeof(data) !== "undefined" && data !== null)
+	{
+
+		if (isChromeAlarmsAvailable())
+		{
+			chrome.alarms.clearAll();
+			chrome.alarms.onAlarm.addListener(function(alarm) {
+			    log("Received alarm: " + alarm.name + '. Creating notification.');
+			    createNotification(alarm.name);
+			  });
+		}
+
+		var tmp = decodeData(data);
+		for (key in tmp)
+		{
+			var routine = new Routine(tmp[key]);
+		}
+
+		initNotificationService();
+	}
+}
+
+function initNotificationService()
+{
+	if (isChromeAlarmsAvailable())
+	{
+		NOTIFICATIONDICT = {};
+
+		for (key in HABITS)
+		{
+			var routine = HABITS[key];
+
+			if (routine !== null && (routine instanceof Routine))
+			{
+				if (routine.getIsReminderActive())
+				{
+					registerAlarm(routine);
+				}
+			}
+		}
+	}
+	
+}
+
+function initUI()
+{
+
+	reconstructListView();
+
+	$("body").unbind().click(clickPerformed);
+	$("body").bind("taphold", tapholdEventHandler);
+}
+
 /******************************** CLICK HANDLING ****************************/
 
 function clickPerformed(evt)
@@ -568,6 +741,20 @@ function clickPerformed(evt)
 		$("#stats-content").animate({ marginLeft : w * 3}, 600);
 		fadeTopEntryInput("out");
 		
+
+	}
+
+	// go to routine detail page
+	else if (lastClickedObject.is("div.delete-entry"))
+	{
+		var id = $(lastClickedObject).attr("data-source");
+		var routine = HABITS[id];
+		if (routine !== null && (routine instanceof Routine))
+		{
+			delete HABITS[id];
+			commitChanges();
+			reconstructListView();
+		}
 
 	}
 
@@ -728,144 +915,14 @@ function clickPerformed(evt)
 	
 }
 
-
-
-/******************************** CHROME ALARM & NOTIFICATION ****************************/
-
-
-function isChromeAlarmsAvailable()
-{
-	if (typeof(chrome) !== "undefined")
-	{
-		if (typeof(chrome.alarms) !== "undefined")
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-function createNotification(id) 
-{
-	if (isChromeAlarmsAvailable())
-	{
-		var routine = HABITS[id];
-
-		if (routine !== null && (routine instanceof Routine))
-		{
-			var opts = {
-				message: '"' + routine.getCaption() + '" scheduled at' + routine.getReminder(),
-				title: 'Reminder',
-				type: 'basic',
-				iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
-			};
-
-			chrome.notifications.create(id, opts, function(notificationId) { });
-		}
-	}
-}
-
-function createAlarm(id, date) 
-{
-	if (isChromeAlarmsAvailable())
-	{
-	  var expectedFireTime = date.getTime();
-	  chrome.alarms.create(id , { when: expectedFireTime });
-	}
-}
-
-function registerAlarm(routine)
-{
-	var presentTime = new Date();
-	var index = dateAsIndex(presentTime);
-	var daysAhead = 0;
-	
-	while (routine._expectation[index] !== 1)
-	{
-		index++;
-		daysAhead++;
-	}
-
-	var tmp = new Date(presentTime.getTime() + daysAhead * 86400000);
-	tmp = new Date(Date.parse(tmp.toString().substr(0, 16) + routine.getReminder() + ":00"));
-
-	if (presentTime.getTime() > tmp.getTime())
-	{
-		index++;
-		daysAhead++;
-		while (routine._expectation[index] !== 1)
-		{
-			index++;
-			daysAhead++;
-		}
-
-		tmp = new Date(presentTime.getTime() + daysAhead * 86400000);
-		tmp = new Date(Date.parse(tmp.toString().substr(0, 16) + routine.getReminder() + ":00"));
-		createAlarm(routine.id(), tmp);
-		
-		NOTIFICATIONDICT[routine.id()] = tmp.getTime();
-	}
-
-}
-
-
-
-/******************************** UI INITIALIZATION ****************************/
-
-
-function initService()
-{
-	HABITS = {};
-
-	var data = localStorage.getItem(app_id + ".data");
-	if (typeof(data) !== "undefined" && data !== null)
-	{
-
-		if (isChromeAlarmsAvailable())
-		{
-			chrome.alarms.clearAll();
-			chrome.alarms.onAlarm.addListener(function(alarm) {
-			    log("Received alarm: " + alarm.name + '. Creating notification.');
-			    createNotification(alarm.name);
-			  });
-		}
-
-		var tmp = decodeData(data);
-		for (key in tmp)
-		{
-			var routine = new Routine(tmp[key]);
-		}
-
-		initNotificationService();
-	}
-}
-
-function initNotificationService()
-{
-	if (isChromeAlarmsAvailable())
-	{
-		NOTIFICATIONDICT = {};
-
-		for (key in HABITS)
-		{
-			var routine = HABITS[key];
-
-			if (routine !== null && (routine instanceof Routine))
-			{
-				if (routine.getIsReminderActive())
-				{
-					registerAlarm(routine);
-				}
-			}
-		}
-	}
-	
-}
-
-function initUI()
+function tapholdEventHandler(evt)
 {
 
-	reconstructListView();
-
-	$("body").unbind().click(clickPerformed);
+	var target = $(evt.target);
+	if (target.is('li.table-view-cell') )
+	{
+		$("div.square-checkbox").toggleClass("ui-screen-hidden");
+		$("div.delete-entry").toggleClass("ui-screen-hidden");
+	}
+  
 }
