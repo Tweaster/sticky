@@ -475,6 +475,170 @@ function buildStatsChart()
 }
 
 
+
+function generatePerformanceChartData(periodLength, sliceLength)
+{
+	var keys = Object.keys(HABITS);
+
+	var chartData = [];
+	var d = new Date();
+	var index = dateAsIndex(d);
+
+	
+
+	
+	for (var i = 0; i < periodLength; i++)
+	{
+		var successCount = 0;
+		var failureCount = 0;
+		var expectedCount = 0;
+		for (var j = 0; j < sliceLength; j++)
+		{
+			
+
+			for (var k = 0; k < keys.length && i < periodLength; k++)
+			{
+				var routine = HABITS[keys[k]];
+				if (routine !== null && (routine instanceof Routine))
+				{
+					if (routine._rec[index] === 1)
+						successCount++;
+					else if (routine._expectation[index] === 1)
+						failureCount++;
+
+					if (routine._expectation[index] === 1)
+						expectedCount++;
+
+					
+				}
+				
+			}
+
+			index--;
+			if (index < 0)
+				index = 365;
+
+
+			i++;
+
+		}
+		i--;
+
+
+		chartData.push(
+			{
+				"caption" : "last " + i + " days",
+				"failure" : -failureCount,
+				"success" : successCount,
+				"expected": expectedCount
+			}
+		); 
+	}
+
+	return chartData;
+}
+
+
+function buildTendencyChart()
+{
+	var tendencyBarChart = AmCharts.makeChart( "tendency-barchart", {
+        "type": "serial",
+        "mouseWheelScrollEnabled": false,
+        "addClassNames": true,
+        "theme": "dark",
+        "autoMargins": true,
+        "marginLeft": 30,
+        "marginRight": 8,
+        "marginTop": 10,
+        "marginBottom": 26,
+        
+        "balloon": {
+          "adjustBorderColor": false,
+          "horizontalPadding": 10,
+          "verticalPadding": 8,
+          "color": "#FFFFFF"
+        },
+
+        "valueAxes": [ {
+          "title": "Performance over the past 90 days",
+          "titleColor" : "#FFFFFF",
+          "axisAlpha": 0,
+          "position": "left",
+          "color": "#FFFFFF",
+          "gridColor": "#FFFFFF"
+
+        } ],
+        "startDuration": 0,
+        "graphs": [ {
+          "alphaField": "alpha",
+          "balloonText": "<span style='font-size:12px;'>[[title]] in [[category]]:<br><span style='font-size:20px;'>[[value]]</span>",
+          "fillAlphas": 0.2,
+          "lineAlpha": 1,
+          "bullet": "round",
+          "bulletSize": 7,
+          "bulletBorderAlpha": 1,
+          "useLineColorForBulletBorder": true,
+          "bulletBorderThickness": 3,
+          "lineThickness": 3,
+          "title": "expected",
+          "type": "smoothedLine",
+          "valueField": "expected",
+          "startDuration" : 0,
+          "dashLengthField": "dashLengthLine"
+        }, 
+        {
+          "id": "graph2",
+          "balloonText": "<span style='font-size:12px;'>[[title]] in the [[category]]:<br><span style='font-size:20px;'>[[value]]</span> [[additional]]</span>",
+          "bullet": "square",
+          "lineThickness": 3,
+          "bulletSize": 7,
+          "bulletBorderAlpha": 1,
+          "useLineColorForBulletBorder": true,
+          "bulletBorderThickness": 3,
+          "fillAlphas": 0.4,
+          "lineAlpha": 1,
+          "title": "Success",
+          "valueField": "success",
+          "lineColor" : "#56b943",
+          "type": "smoothedLine",
+          "startDuration": 0,
+          "dashLengthField": "dashLengthLine"
+        },
+        {
+          "id": "graph3",
+          "balloonText": "<span style='font-size:12px;'>[[title]] in the [[category]]:<br><span style='font-size:20px;'>[[value]]",
+          "lineThickness": 1,
+          "fillAlphas": 0.5,
+          "lineAlpha": 1,
+          "title": "Failed",
+          "valueField": "failure",
+          "lineColor" : "#d94653",
+          "startDuration" : 0,
+          "type": "column",
+          "dashLengthField": "dashLengthColumn"
+        }  ],
+        "categoryField": "caption",
+        "categoryAxis": {
+          "gridPosition": "start",
+          "gridColor": "#FFFFFF" ,
+          "axisAlpha": 1,
+          "tickLength": 1,
+          "labelRotation": 45,
+          "color": "#FFFFFF" ,
+
+        },
+        "export": {
+          "enabled": false
+        }
+      } );
+
+	tendencyBarChart.dataProvider = generatePerformanceChartData(91, 7);
+  	tendencyBarChart.validateData();
+
+
+}
+
+
 function generateRoutineChartData(routine)
 {
 	var chartData = [];
@@ -891,9 +1055,10 @@ function clickPerformed(evt)
 				if (w > 500)
 					w = 500;
 
-				$("#stats-barchart").css("height", w.toString() + "px");
-				$("#stats-barchart").css("width", w.toString() + "px");
+				$("#stats-barchart, #tendency-barchart").css("height", w.toString() + "px");
+				$("#stats-barchart, #tendency-barchart").css("width", w.toString() + "px");
 				buildStatsChart(routine);
+				buildTendencyChart();
 			},
 			100
 		);
