@@ -534,10 +534,6 @@ function buildRoutinePieChart(routine)
 
 function isChromeAlarmsAvailable()
 {
-
-	return true;
-
-
 	if (typeof(chrome) !== "undefined")
 	{
 		if (typeof(chrome.alarms) !== "undefined")
@@ -550,21 +546,37 @@ function isChromeAlarmsAvailable()
 
 function createNotification(id) 
 {
-	if (isChromeAlarmsAvailable())
+	
+	var routine = HABITS[id];
+
+	if (routine !== null && (routine instanceof Routine))
 	{
-		var routine = HABITS[id];
+		var opts = {
+			message: '"' + routine.getCaption() + '" scheduled at' + routine.getReminder(),
+			title: 'Reminder',
+			type: 'basic',
+			iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
+		};
 
-		if (routine !== null && (routine instanceof Routine))
+		if (isChromeAlarmsAvailable())
 		{
-			var opts = {
-				message: '"' + routine.getCaption() + '" scheduled at' + routine.getReminder(),
-				title: 'Reminder',
-				type: 'basic',
-				iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
-			};
-
-			
 			chrome.notifications.create(guid(), opts, function(notificationId) { 
+				setTimeout(
+					function()
+					{
+						initNotificationService(); 
+					},
+					35000
+				);
+			});
+		}
+
+		
+		navigator.notification.beep(1);
+		navigator.notification.vibrate(2000);
+		navigator.notification.alert(
+            opts.message,        
+            function(notificationId) { 
 				setTimeout(
 					function()
 					{
@@ -572,29 +584,11 @@ function createNotification(id)
 					},
 					30000
 				);
-			});
-			
-
-
-			/*
-			navigator.notification.beep(1);
-			//navigator.notification.vibrate(2000);
-			navigator.notification.alert(
-                opts.message,         // message
-                function(notificationId) { 
-					setTimeout(
-						function()
-						{
-							initNotificationService(); 
-						},
-						30000
-					);
-				},                 // callback
-                opts.title,           // title
-                'Ok'                  // buttonName
-            );
-			*/
-		}
+			},                 
+            opts.title,           
+            'Ok'                  
+        );
+		
 	}
 }
 
@@ -605,20 +599,18 @@ function createAlarm(id, date)
 	{
 	    var expectedFireTime = date.getTime();
 	    chrome.alarms.create(id , { when: expectedFireTime });
-	
-		/*
-		var timeout = date.getTime() - Date.now();
-	
-		return setTimeout(
-			function()
-			{
-				createNotification(id);
-			},
-			timeout
-		);
-*/
 	}
-	return date.toString();
+	
+		
+	var timeout = date.getTime() - Date.now();
+
+	return setTimeout(
+		function()
+		{
+			createNotification(id);
+		},
+		timeout
+	);
 }
 
 function registerAlarm(routine)
@@ -656,42 +648,35 @@ function registerAlarm(routine)
 
 function initNotificationService()
 {
+
 	if (isChromeAlarmsAvailable())
 	{
-		
-		if (isChromeAlarmsAvailable())
+		chrome.alarms.clearAll();
+		chrome.alarms.onAlarm.addListener(function(alarm) {
+		    log("Received alarm: " + alarm.name + '. Creating notification.');
+		    createNotification(alarm.name);
+		  });
+	}
+	
+	for (key in NOTIFICATIONDICT)
+	{
+		clearTimeout(NOTIFICATIONDICT[key]);
+	}
+	
+	NOTIFICATIONDICT = {};
+
+	for (key in HABITS)
+	{
+		var routine = HABITS[key];
+
+		if (routine !== null && (routine instanceof Routine))
 		{
-			chrome.alarms.clearAll();
-			chrome.alarms.onAlarm.addListener(function(alarm) {
-			    log("Received alarm: " + alarm.name + '. Creating notification.');
-			    createNotification(alarm.name);
-			  });
-		}
-		
-
-		/*
-		for (key in NOTIFICATIONDICT)
-		{
-			clearTimeout(NOTIFICATIONDICT[key]);
-		}
-		*/
-
-		NOTIFICATIONDICT = {};
-
-		for (key in HABITS)
-		{
-			var routine = HABITS[key];
-
-			if (routine !== null && (routine instanceof Routine))
+			if (routine.getIsReminderActive())
 			{
-				if (routine.getIsReminderActive())
-				{
-					registerAlarm(routine);
-				}
+				registerAlarm(routine);
 			}
 		}
 	}
-	
 }
 
 
