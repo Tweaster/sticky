@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <widget 
     id="org.projectfurnace.stickyroutine" 
-    version="0.1.1" 
+    version="0.1.2" 
     xmlns="http://www.w3.org/ns/widgets" 
     xmlns:cdv="http://cordova.apache.org/ns/1.0">
 
@@ -100,9 +100,9 @@
         <splash src="res/screen/android/drawable-port-xxxhdpi-screen.png" qualifier="xxxhdpi"/>
       </platform>
       
-      <preference name="permissions" value="none"/>
+      
 
-      <feature name="http://api.phonegap.com/1.0/notification"/>
+      
       
       <plugin name="cordova-plugin-device" spec="~1.1.1" source="npm"/>
       <plugin name="cordova-plugin-dialogs" spec="~1.2.0" source="npm"/>

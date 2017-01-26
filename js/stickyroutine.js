@@ -1157,6 +1157,42 @@ function clickPerformed(evt)
 			reinitializeNotificationService();
 		}
 	}
+
+	// click on calendar
+	else if (lastClickedObject.is('a.fc-day-grid-event'))
+	{
+		var classList = $(lastClickedObject).attr('class').split(/\s+/);
+		$.each(classList, function(index, item) {
+		    if (!item.startsWith('fc-')) {
+		        $("li#menu-item-list-view").removeClass("checked");
+		  		editEntryHTML(item);
+
+		  		var w = $(window).width();
+		  		$("#routine-detail-content").animate({ marginLeft : 0}, 600);
+				$("#listview-content").animate({ marginLeft : w}, 599);
+				$("#calendar-content").animate({ marginLeft : w * 2}, 600);
+				$("#stats-content").animate({ marginLeft : w * 3}, 600);
+				fadeTopEntryInput("out");
+		    }
+		});
+	}
+	else if (lastClickedObject.is('span.fc-title'))
+	{
+		var classList = $($(lastClickedObject).parent().parent()).attr('class').split(/\s+/);
+		$.each(classList, function(index, item) {
+		    if (!item.startsWith('fc-')) {
+		        $("li#menu-item-list-view").removeClass("checked");
+		  		editEntryHTML(item);
+
+		  		var w = $(window).width();
+		  		$("#routine-detail-content").animate({ marginLeft : 0}, 600);
+				$("#listview-content").animate({ marginLeft : w}, 599);
+				$("#calendar-content").animate({ marginLeft : w * 2}, 600);
+				$("#stats-content").animate({ marginLeft : w * 3}, 600);
+				fadeTopEntryInput("out");
+		    }
+		});
+	}
 	
 }
 
