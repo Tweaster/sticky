@@ -831,7 +831,7 @@ function reinitializeNotificationService()
 		}
 
 		cordova.plugins.notification.local.on("trigger", function (notification) {
-			createNotification(notification);
+			createNotification(notification.id);
 			setTimeout(
 				function()
 				{
