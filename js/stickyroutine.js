@@ -685,6 +685,25 @@ function isChromeAlarmsAvailable()
 	return false;
 }
 
+function isCordovaNotificationLocalAvailable()
+{
+	if (typeof(cordova) !== "undefined")
+	{
+		if (typeof(cordova.plugins) !== "undefined")
+		{
+			if (typeof(cordova.plugins.notification) !== "undefined")
+			{
+				if (typeof(cordova.plugins.notification.local) !== "undefined")
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+
 function createNotification(id) 
 {
 	
@@ -693,7 +712,7 @@ function createNotification(id)
 	if (routine !== null && (routine instanceof Routine))
 	{
 		var opts = {
-			message: '"' + routine.getCaption() + '" scheduled at' + routine.getReminder(),
+			message: '"' + routine.getCaption() + '" scheduled at ' + routine.getReminder(),
 			title: 'Sticky Routine - Reminder',
 			type: 'basic',
 			iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
@@ -735,23 +754,57 @@ function createNotification(id)
 
 function createAlarm(id, date) 
 {
-	
-	if (isChromeAlarmsAvailable())
-	{
-	    var expectedFireTime = date.getTime();
-	    chrome.alarms.create(id , { when: expectedFireTime });
-	}
-	
-		
-	var timeout = date.getTime() - Date.now();
+	var routine = HABITS[alarmId];
 
-	return setTimeout(
-		function()
+	if (routine !== null && (routine instanceof Routine))
+	{
+		var opts = {
+			message: '"' + routine.getCaption() + '" scheduled at ' + routine.getReminder(),
+			title: 'Sticky Routine - Reminder',
+			type: 'basic',
+			iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
+		};
+
+		
+
+		if (isCordovaNotificationLocalAvailable())
 		{
-			createNotification(id);
-		},
-		timeout
-	);
+			cordova.plugins.notification.local.schedule({
+			    id: alarmId,
+			    title: opts.title,
+			    text: opts.message,
+			    at: date,
+			    sound: "file://sounds/alarm.mp3",
+			    icon: opts.iconUrl,
+			});
+			return alarmId;
+		}
+		else
+		{
+			if (isChromeAlarmsAvailable())
+			{
+			    var expectedFireTime = date.getTime();
+			    chrome.alarms.create(id , { when: expectedFireTime });
+			}
+			
+				
+			var timeout = date.getTime() - Date.now();
+
+			return setTimeout(
+				function()
+				{
+					createNotification(id);
+				},
+				timeout
+			);
+		}
+	}
+}
+
+
+function createAlarm(alarmId, date)
+{
+	
 }
 
 function registerAlarm(routine)
@@ -798,21 +851,43 @@ function registerAlarm(routine)
 
 }
 
+
+
 function reinitializeNotificationService()
 {
+	if (isCordovaNotificationLocalAvailable())
+	{
+		for (key in NOTIFICATIONDICT)
+		{
+			cordova.plugins.notification.local.cancel(key, function () {});
+			cordova.plugins.notification.local.clear(key, function () {});
+		}
 
-	if (isChromeAlarmsAvailable())
-	{
-		chrome.alarms.clearAll();
-		chrome.alarms.onAlarm.addListener(function(alarm) {
-		    log("Received alarm: " + alarm.name + '. Creating notification.');
-		    createNotification(alarm.name);
-		  });
+		cordova.plugins.notification.local.on("trigger", function (notification) {
+			setTimeout(
+				function()
+				{
+					reinitializeNotificationService();
+				},
+				30000
+			);
+		});
 	}
-	
-	for (key in NOTIFICATIONDICT)
+	else
 	{
-		clearTimeout(NOTIFICATIONDICT[key]);
+		if (isChromeAlarmsAvailable())
+		{
+			chrome.alarms.clearAll();
+			chrome.alarms.onAlarm.addListener(function(alarm) {
+			    log("Received alarm: " + alarm.name + '. Creating notification.');
+			    createNotification(alarm.name);
+			  });
+		}
+		
+		for (key in NOTIFICATIONDICT)
+		{
+			clearTimeout(NOTIFICATIONDICT[key]);
+		}
 	}
 	
 	NOTIFICATIONDICT = {};
