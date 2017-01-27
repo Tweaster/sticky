@@ -1,4 +1,5 @@
 var gTaskBackgroundColor = {};
+var gCalendar = null;
 
 
 
@@ -44,7 +45,7 @@ function prepareRoutineCalendarData(routine, data)
 			{
 				var e = toCalendarDateFormat(tmp) + timeStr;
 				var s = toCalendarDateFormat(tmp) + timeStr;
-				data.push({
+				var src = {
 					backgroundColor: color,
 					borderColor: color,
 					id: routine.id(),
@@ -55,7 +56,8 @@ function prepareRoutineCalendarData(routine, data)
 					startEditable: false,
 					editable: false,
 					className: routine.id()
-				});
+				};
+				data.push(src);
 			}
 
 
@@ -87,8 +89,6 @@ function extractProjectCalendarData()
 function buildCalendar()
 {
 
-
-
 	var data = [];
 
 	for (key in HABITS)
@@ -100,28 +100,42 @@ function buildCalendar()
 		}
 	}
 
-	setTimeout(
-		function()
-		{
-			$('#project-calendar').fullCalendar({
-				header: {
-					left: 'prev,next today',
-					center: 'title',
-					right: 'month,agendaWeek,agendaDay,listWeek'
-				},
-				businessHours: extractProjectCalendarData(),
-				eventBackgroundColor : "#0dceb0",
-				eventBorderColor : "#1ddec0",
-				navLinks: true, // can click day/week names to navigate views
-				editable: false,
-				eventLimit: true, // allow "more" link when too many events
-				events: data,
-				nowIndicator: true
-			});
-		}
-		,
-		1
-	);
+
+	if (gCalendar === null)
+	{
+		setTimeout(
+			function()
+			{
+				gCalendar = $('#project-calendar').fullCalendar({
+					header: {
+						left: 'prev,next today',
+						center: 'title',
+						right: 'month,agendaWeek,agendaDay,listWeek'
+					},
+					businessHours: extractProjectCalendarData(),
+					eventBackgroundColor : "#0dceb0",
+					eventBorderColor : "#1ddec0",
+					navLinks: true, // can click day/week names to navigate views
+					editable: false,
+					eventLimit: true, // allow "more" link when too many events
+					events: data,
+					nowIndicator: true
+				});
+
+				
+			}
+			,
+			50
+		);
+	}
+	else
+	{
+		//gCalendar.fullCalendar('updateEvents', data);
+		gCalendar.fullCalendar('removeEvents');
+		gCalendar.fullCalendar('addEventSource', data);
+		
+
+	}
 
 
 }

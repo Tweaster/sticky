@@ -341,6 +341,9 @@ function commitChanges()
 {
 	var raw_data = encodeData(HABITS);
 	localStorage.setItem(app_id + ".data", raw_data);
+
+	buildCalendar();
+	
 }
 
 
@@ -912,6 +915,8 @@ function initUI()
 	applyTheme();
 	reconstructListView();
 
+	buildCalendar();
+
 	$("body").unbind().click(clickPerformed);
 	$("body").bind("taphold", tapholdEventHandler);
 	$("input.pull-left").unbind().keydown(createNewEntry);
@@ -921,6 +926,15 @@ function initUI()
 			applyTheme($("select#theme-popover-combo").val());
 			$("div#theme-popover").addClass("ui-screen-hidden");
 		}
+	);
+
+	setTimeout(
+		function() 
+		{
+			$("#loader").toggleClass("ui-screen-hidden");
+			$("#sticky").toggleClass("ui-screen-hidden");
+		},
+		1500
 	);
 }
 
@@ -1028,7 +1042,8 @@ function clickPerformed(evt)
 		$("#stats-content").animate({ marginLeft : w }, 600);
 		fadeTopEntryInput("out");
 
-		buildCalendar();
+		//buildCalendar();
+		gCalendar.fullCalendar( 'changeView', "agendaWeek" );
 	}
 
 	// top menu "stats view"

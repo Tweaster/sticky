@@ -1,15 +1,15 @@
 <?xml version='1.0' encoding='utf-8'?>
 <widget 
     id="org.projectfurnace.stickyroutine" 
-    version="0.1.3" 
+    version="0.1.4" 
     xmlns="http://www.w3.org/ns/widgets" 
     xmlns:cdv="http://cordova.apache.org/ns/1.0">
 
     <name>Sticky Routine</name>
     <description>
-        An app that will help you stick to your routine.
+        Sticky Routine focus on recurring behavior. This application will help you adopt the habit of setting priorities, overcoming procrastination, and getting on with your most important task.
     </description>
-    <author email="fabrice@projectfurnace.org" href="http://buddjet.projectfurnace.org">
+    <author email="fabrice@projectfurnace.org" href="http://sticky.projectfurnace.org">
         Fabrice Rasoamiaramanana
     </author>
 
