@@ -720,34 +720,9 @@ function createNotification(id)
 
 		if (isChromeAlarmsAvailable())
 		{
-			chrome.notifications.create(guid(), opts, function(notificationId) { 
-				setTimeout(
-					function()
-					{
-						reinitializeNotificationService(); 
-					},
-					5000
-				);
-			});
+			chrome.notifications.create(guid(), opts, function(notificationId) { });
 		}
 
-		
-		navigator.notification.beep(1);
-		navigator.notification.vibrate(2000);
-		navigator.notification.alert(
-            opts.message,        
-            function(notificationId) { 
-				setTimeout(
-					function()
-					{
-						reinitializeNotificationService(); 
-					},
-					5000
-				);
-			},                 
-            opts.title,           
-            'Ok'                  
-        );
 		
 	}
 }
@@ -786,17 +761,6 @@ function createAlarm(alarmId, date)
 			    var expectedFireTime = date.getTime();
 			    chrome.alarms.create(id , { when: expectedFireTime });
 			}
-			
-				
-			var timeout = date.getTime() - Date.now();
-
-			return setTimeout(
-				function()
-				{
-					createNotification(id);
-				},
-				timeout
-			);
 		}
 	}
 }
@@ -852,6 +816,12 @@ function registerAlarm(routine)
 
 function reinitializeNotificationService()
 {
+
+	if (Object.keys(HABITS).length === 0)
+	{
+		initService();
+	}
+
 	if (isCordovaNotificationLocalAvailable())
 	{
 		for (key in NOTIFICATIONDICT)
@@ -861,6 +831,7 @@ function reinitializeNotificationService()
 		}
 
 		cordova.plugins.notification.local.on("trigger", function (notification) {
+			createNotification(notification);
 			setTimeout(
 				function()
 				{
@@ -874,7 +845,10 @@ function reinitializeNotificationService()
 	{
 		if (isChromeAlarmsAvailable())
 		{
-			chrome.alarms.clearAll();
+			for (key in NOTIFICATIONDICT)
+			{
+				chrome.alarms.clear(key);
+			}
 			chrome.alarms.onAlarm.addListener(function(alarm) {
 			    log("Received alarm: " + alarm.name + '. Creating notification.');
 			    createNotification(alarm.name);
