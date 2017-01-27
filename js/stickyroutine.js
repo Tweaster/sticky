@@ -775,7 +775,7 @@ function createAlarm(alarmId, date)
 			    text: opts.message,
 			    at: date,
 			    sound: "file://sounds/alarm.mp3",
-			    icon: opts.iconUrl,
+			    icon: opts.iconUrl
 			});
 			return alarmId;
 		}
