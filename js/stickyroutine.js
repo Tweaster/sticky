@@ -726,7 +726,7 @@ function createNotification(id)
 					{
 						reinitializeNotificationService(); 
 					},
-					35000
+					5000
 				);
 			});
 		}
@@ -742,7 +742,7 @@ function createNotification(id)
 					{
 						reinitializeNotificationService(); 
 					},
-					30000
+					5000
 				);
 			},                 
             opts.title,           
@@ -752,7 +752,7 @@ function createNotification(id)
 	}
 }
 
-function createAlarm(id, date) 
+function createAlarm(alarmId, date) 
 {
 	var routine = HABITS[alarmId];
 
@@ -802,10 +802,7 @@ function createAlarm(id, date)
 }
 
 
-function createAlarm(alarmId, date)
-{
-	
-}
+
 
 function registerAlarm(routine)
 {
@@ -869,7 +866,7 @@ function reinitializeNotificationService()
 				{
 					reinitializeNotificationService();
 				},
-				30000
+				5000
 			);
 		});
 	}
