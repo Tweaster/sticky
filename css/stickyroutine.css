@@ -204,6 +204,8 @@ input[type="time"].semi-transparent-bgnd
 
 span.icon.icon-plus, span.icon.icon-plus:before { background: transparent; border: 0; }
 
+span.validate, span.validate:before { background: transparent; border: 0; font-weight: normal;}
+
 .btn-primary.pull-right { 
 	background: -webkit-gradient(linear, left top, left bottom, from(#333), to(#222));
     background: -moz-gradient(linear, left top, left bottom, from(#333), to(#222));
@@ -775,6 +777,7 @@ span.daily-round-circle:hover, span.monthly-round-circle:hover, span.failure-rou
 {
 	margin-top: 40px;
 	display: inline-block;
+  width: 100%;
 }
 
 .streak-container 

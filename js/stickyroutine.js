@@ -102,7 +102,15 @@ function monthlyRoutineWorkingDaysHTML(routine)
 function intervalRoutineWorkingDaysHTML(routine)
 {
 	var html = `<div class="interval-routine-calendar">
-				<label>Interval in between routine (in days): </label> <input type="number" class="semi-transparent-bgnd no-border" placeholder="Enter number of days..." autocomplete="off"  data-source="{0}" id="entry-interval-input" value="{1}">
+				<label>Interval in between routine (in days): </label> 
+				<form class="input-group">
+				<div class="input-row">
+					<input type="number" class="pull-left" placeholder="Enter number of days..." autocomplete="off"  data-source="{0}" id="entry-interval-input" value="{1}">
+					<button type="button"  class="btn btn-primary pull-right">
+						<span class="validate" id="btn-validate-interval">Validate</span>
+					</button>
+				</div>
+				</form>
 			</div>`;
 
 	return String.format(html, routine.id(), routine.getInterval().toString());
@@ -113,7 +121,15 @@ function reminderHTML(routine)
 {
 	var html = `<div class="routine-reminder">
 					<input type="checkbox" value="" data-source="{0}" id="routine-reminder-checkbox" {2}/>
-					<label>Reminder at: </label> <input type="time" class="semi-transparent-bgnd no-border" data-source="{0}" id="entry-reminder-input" value="{1}">
+					<label>Reminder at: </label> 
+					<form class="input-group">
+					<div class="input-row">
+						<input type="time" class="pull-left" data-source="{0}" id="entry-reminder-input" value="{1}">
+						<button type="button" class="btn btn-primary pull-right">
+							<span class="validate" id="btn-validate-reminder">Validate</span>
+						</button>
+					</div>
+					</form>
 				</div>`;
 
 	return String.format(html, routine.id(), routine.getReminder(), (routine.getIsReminderActive() ? "checked" : ""));
@@ -206,64 +222,7 @@ function createNewEntry(event)
   	}
 }
 
-function validateNewCaption(event)
-{
-	if (event.type == 'keydown' && (event.which == 13 || event.which == 9))
-  	{
-  		var newVal = $("#entry-caption-input").val();
-  		var id = $("#entry-caption-input").attr("data-source");
-  		var routine = HABITS[id];
 
-  		if (routine !== null && (routine instanceof Routine))
-  		{
-  			routine.setCaption(newVal);
-  			commitChanges();
-  			editEntryHTML(id);
-  		}
-  	}
-}
-
-function validateNewReminder()
-{
-	var newVal = $("#entry-reminder-input").val();
-
-	if (newVal !== "--:--")
-	{
-		var id = $("#entry-reminder-input").attr("data-source");
-		var routine = HABITS[id];
-
-		if (routine !== null && (routine instanceof Routine))
-		{
-			if (newVal === routine.getReminder())
-				return;
-		
-			routine.setReminder(newVal);
-			commitChanges();
-			if (routine.getIsReminderActive())
-				reinitializeNotificationService();
-
-			editEntryHTML(id);
-		}
-	}
-}
-
-
-function validateNewInterval()
-{
-	if (event.type == 'keydown' && (event.which == 13 || event.which == 9))
-  	{
-  		var newVal = Number($("#entry-interval-input").val());
-  		var id = $("#entry-interval-input").attr("data-source");
-  		var routine = HABITS[id];
-
-  		if (routine !== null && (routine instanceof Routine))
-  		{
-  			routine.setInterval(newVal);
-  			commitChanges();
-  			editEntryHTML(id);
-  		}
-  	}
-}
 
 
 function editEntryHTML(id)
@@ -277,8 +236,15 @@ function editEntryHTML(id)
 		var editHtml = `
 
 		<div class="routine-details-container">
-			<div>
-			<input type="text" class="semi-transparent-bgnd no-border" placeholder="Edit Entry Caption..." autocomplete="off" data-source="{0}" id="entry-caption-input" value="{1}">
+			<form class="input-group">
+			<div class="input-row">
+				<input type="text" class="pull-left" placeholder="Edit Entry Caption..." autocomplete="off" data-source="{0}" id="entry-caption-input" value="{1}">
+				<button type="button"  class="btn btn-primary pull-right">
+					<span class="validate" id="btn-validate-caption">Rename</span>
+				</button>
+			</div>
+			</form>
+			
 			</div>
 			<div id="frequency-bar-container">
 			<ul>
@@ -323,11 +289,6 @@ function editEntryHTML(id)
 				$("#routine-pie-chart").css("width", w.toString() + "px");
 				$("#routine-pie-chart").css("height", (w * 0.4).toString() + "px");
 				buildRoutinePieChart(routine);
-
-
-				$("#entry-caption-input").unbind().keydown(validateNewCaption);
-				$("#entry-reminder-input").on('input', validateNewReminder);
-				$("#entry-interval-input").unbind().keydown(validateNewInterval);
 			},
 			100
 		);
@@ -1171,6 +1132,59 @@ function clickPerformed(evt)
 			editEntryHTML(id);
 			reinitializeNotificationService();
 		}
+	}
+
+	else if (lastClickedObject.is("span#btn-validate-caption"))
+	{
+  		var newVal = $("#entry-caption-input").val();
+  		var id = $("#entry-caption-input").attr("data-source");
+  		var routine = HABITS[id];
+
+  		if (routine !== null && (routine instanceof Routine))
+  		{
+  			routine.setCaption(newVal);
+  			commitChanges();
+  			editEntryHTML(id);
+  		}
+	}
+
+	else if (lastClickedObject.is("span#btn-validate-reminder"))
+	{
+		var newVal = $("#entry-reminder-input").val();
+
+		if (newVal !== "--:--")
+		{
+			var id = $("#entry-reminder-input").attr("data-source");
+			var routine = HABITS[id];
+
+			if (routine !== null && (routine instanceof Routine))
+			{
+				if (newVal === routine.getReminder())
+					return;
+			
+				routine.setReminder(newVal);
+				commitChanges();
+				if (routine.getIsReminderActive())
+					reinitializeNotificationService();
+
+				editEntryHTML(id);
+			}
+		}
+	}
+
+
+	else if (lastClickedObject.is("span#btn-validate-interval"))
+	{
+  		var newVal = Number($("#entry-interval-input").val());
+  		var id = $("#entry-interval-input").attr("data-source");
+  		var routine = HABITS[id];
+
+  		if (routine !== null && (routine instanceof Routine))
+  		{
+  			routine.setInterval(newVal);
+  			commitChanges();
+  			editEntryHTML(id);
+  		}
 	}
 
 	// click on calendar
