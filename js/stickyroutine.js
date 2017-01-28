@@ -704,10 +704,10 @@ function isCordovaNotificationLocalAvailable()
 }
 
 
-function createNotification(id) 
+function createNotification(scheduledId) 
 {
 	
-	var routine = HABITS[id];
+	var routine = HABITS[NOTIFICATIONDICT[scheduledId.toString()]];
 
 	if (routine !== null && (routine instanceof Routine))
 	{
@@ -720,16 +720,16 @@ function createNotification(id)
 
 		if (isChromeAlarmsAvailable())
 		{
-			chrome.notifications.create(guid(), opts, function(notificationId) { });
+			chrome.notifications.create(scheduledId.toString(), opts, function(notificationId) { });
 		}
 
 		
 	}
 }
 
-function createAlarm(alarmId, date) 
+function createAlarm(routineId, date) 
 {
-	var routine = HABITS[alarmId];
+	var routine = HABITS[routineId];
 
 	if (routine !== null && (routine instanceof Routine))
 	{
@@ -741,28 +741,32 @@ function createAlarm(alarmId, date)
 		};
 
 		
-
+		var idSchedule = date.getTime();
 		if (isCordovaNotificationLocalAvailable())
 		{
+			
 			cordova.plugins.notification.local.schedule({
-			    id: alarmId,
+			    id: idSchedule,
 			    title: opts.title,
 			    text: opts.message,
 			    at: date,
 			    sound: "file://sounds/alarm.mp3",
 			    icon: opts.iconUrl
 			});
-			return alarmId;
+			return idSchedule.toString();
 		}
 		else
 		{
 			if (isChromeAlarmsAvailable())
 			{
 			    var expectedFireTime = date.getTime();
-			    chrome.alarms.create(id , { when: expectedFireTime });
+			    chrome.alarms.create(idSchedule.toString() , { when: expectedFireTime });
+			    return idSchedule.toString();
 			}
 		}
 	}
+
+	return null;
 }
 
 
@@ -808,7 +812,11 @@ function registerAlarm(routine)
 	}
 
 	if (presentTime.getTime() < tmp.getTime())
-		NOTIFICATIONDICT[routine.id()] = createAlarm(routine.id(), tmp);
+	{
+		var scheduleId = tmp.getTime().toString();
+		NOTIFICATIONDICT[scheduleId] = routine.id();
+		var scheduledTime = createAlarm(routine.id(), tmp);
+	}
 
 }
 
@@ -826,12 +834,11 @@ function reinitializeNotificationService()
 	{
 		for (key in NOTIFICATIONDICT)
 		{
-			cordova.plugins.notification.local.cancel(key, function () {});
-			cordova.plugins.notification.local.clear(key, function () {});
+			cordova.plugins.notification.local.cancel(Number(key), function () {});
+			cordova.plugins.notification.local.clear(Number(key), function () {});
 		}
 
 		cordova.plugins.notification.local.on("trigger", function (notification) {
-			createNotification(notification.id);
 			setTimeout(
 				function()
 				{
@@ -839,6 +846,7 @@ function reinitializeNotificationService()
 				},
 				5000
 			);
+			createNotification(notification.id);
 		});
 	}
 	else
@@ -847,17 +855,11 @@ function reinitializeNotificationService()
 		{
 			for (key in NOTIFICATIONDICT)
 			{
-				chrome.alarms.clear(key);
+				chrome.alarms.clear(key.toString());
 			}
 			chrome.alarms.onAlarm.addListener(function(alarm) {
-			    log("Received alarm: " + alarm.name + '. Creating notification.');
 			    createNotification(alarm.name);
 			  });
-		}
-		
-		for (key in NOTIFICATIONDICT)
-		{
-			clearTimeout(NOTIFICATIONDICT[key]);
 		}
 	}
 	
