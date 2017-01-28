@@ -218,6 +218,7 @@ function createNewEntry(event)
 			$('input.pull-left').val("");
 			$("ul.table-view").append(html);
 			commitChanges();
+			buildCalendar();
 		}
   	}
 }
@@ -302,9 +303,6 @@ function commitChanges()
 {
 	var raw_data = encodeData(HABITS);
 	localStorage.setItem(app_id + ".data", raw_data);
-
-	buildCalendar();
-	
 }
 
 
@@ -971,6 +969,7 @@ function clickPerformed(evt)
 			$('input.pull-left').val("");
 			$("ul.table-view").append(html);
 			commitChanges();
+			buildCalendar();
 		}
 
 	}
@@ -1017,6 +1016,7 @@ function clickPerformed(evt)
 			delete HABITS[id];
 			commitChanges();
 			reconstructListView();
+			buildCalendar();
 		}
 
 	}
@@ -1099,6 +1099,7 @@ function clickPerformed(evt)
 			routine.setIsWorkingDay(day, isChecked);
 			reinitializeNotificationService();
 			commitChanges();
+			buildCalendar();
 		}
 		
 	}
@@ -1131,8 +1132,9 @@ function clickPerformed(evt)
 		{
 			routine.setFrequency("DAILY");
 			commitChanges();
-			reinitializeNotificationService();
 			editEntryHTML(id);
+			buildCalendar();
+			reinitializeNotificationService();
 		}
 		
 	}
@@ -1146,8 +1148,9 @@ function clickPerformed(evt)
 		{
 			routine.setFrequency("MONTHLY");
 			commitChanges();
-			reinitializeNotificationService();
 			editEntryHTML(id);
+			buildCalendar();
+			reinitializeNotificationService();
 		}
 		
 	}
@@ -1161,8 +1164,9 @@ function clickPerformed(evt)
 		{
 			routine.setFrequency("INTERVAL");
 			commitChanges();
-			reinitializeNotificationService();
 			editEntryHTML(id);
+			reinitializeNotificationService();
+			buildCalendar();
 		}
 		
 	}
@@ -1178,6 +1182,7 @@ function clickPerformed(evt)
 			routine.setReminderActive(isChecked);
 			commitChanges();
 			editEntryHTML(id);
+			buildCalendar();
 			reinitializeNotificationService();
 		}
 	}
@@ -1193,6 +1198,7 @@ function clickPerformed(evt)
   			routine.setCaption(newVal);
   			commitChanges();
   			editEntryHTML(id);
+  			buildCalendar();
   		}
 	}
 
@@ -1212,10 +1218,11 @@ function clickPerformed(evt)
 			
 				routine.setReminder(newVal);
 				commitChanges();
-				if (routine.getIsReminderActive())
-					reinitializeNotificationService();
+					
 
 				editEntryHTML(id);
+				reinitializeNotificationService();
+				buildCalendar();
 			}
 		}
 	}
@@ -1232,6 +1239,8 @@ function clickPerformed(evt)
   			routine.setInterval(newVal);
   			commitChanges();
   			editEntryHTML(id);
+  			reinitializeNotificationService();
+			buildCalendar();
   		}
 	}
 
