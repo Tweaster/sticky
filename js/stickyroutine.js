@@ -854,7 +854,6 @@ function registerAlarm(routine)
 }
 
 
-
 function reinitializeNotificationService()
 {
 
@@ -866,7 +865,6 @@ function reinitializeNotificationService()
 	if (isCordovaNotificationLocalAvailable())
 	{
 		cordova.plugins.notification.local.cancelAll();
-		cordova.plugins.notification.local.clearAll();
 		
 
 		cordova.plugins.notification.local.on("trigger", function (notification) {
@@ -884,8 +882,6 @@ function reinitializeNotificationService()
 	{
 		if (isChromeAlarmsAvailable())
 		{
-
-			chrome.alarms.clearAll();
 			
 			chrome.alarms.onAlarm.addListener(function(alarm) {
 			    createNotification(alarm.name);
