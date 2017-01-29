@@ -702,7 +702,7 @@ function isChromeAlarmsAvailable()
 {
 	if (typeof(chrome) !== "undefined")
 	{
-		if (typeof(chrome.alarms) !== "undefined")
+		if (typeof(chrome.alarms) !== "undefined" && typeof(chrome.notifications) !== "undefined")
 		{
 			return true;
 		}
@@ -864,7 +864,12 @@ function reinitializeNotificationService()
 
 	if (isCordovaNotificationLocalAvailable())
 	{
-		cordova.plugins.notification.local.cancelAll();
+		
+
+		for (key in Object.keys(HABITS))
+		{
+			cordova.plugins.notification.local.cancel(hashCode(key));
+		}
 		
 
 		cordova.plugins.notification.local.on("trigger", function (notification) {
@@ -882,8 +887,12 @@ function reinitializeNotificationService()
 	{
 		if (isChromeAlarmsAvailable())
 		{
-			
-			chrome.alarms.onAlarm.addListener(function(alarm) {
+			for (key in Object.keys(HABITS))
+			{
+				chrome.alarms.clear(hashCode(key));
+			}
+			chrome.alarms.onAlarm.addListener(function(alarm) 
+			{
 			    createNotification(alarm.name);
 			});
 		}
