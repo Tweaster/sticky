@@ -847,12 +847,7 @@ function registerAlarm(routine)
 
 	if (presentTime.getTime() < tmp.getTime())
 	{
-		var scheduleId = tmp.getTime().toString();
-		if (typeof(NOTIFICATIONDICT[scheduleId]) === "undefined")
-			NOTIFICATIONDICT[scheduleId] = routine.id();
-		else
-			NOTIFICATIONDICT[scheduleId] = NOTIFICATIONDICT[scheduleId] + "," + routine.id();
-
+		NOTIFICATIONDICT[hashCode(routine.id())] = routine.id();
 		var scheduledTime = createAlarm(routine.id(), tmp);
 	}
 
