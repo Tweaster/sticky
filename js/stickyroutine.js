@@ -125,9 +125,9 @@ function reminderHTML(routine)
 					<form class="input-group">
 					<div class="input-row">
 						<input type="time" class="pull-left" data-source="{0}" id="entry-reminder-input" value="{1}">
-						<button type="button" class="btn btn-primary pull-right">
+						<!--button type="button" class="btn btn-primary pull-right">
 							<span class="validate" id="btn-validate-reminder">Validate</span>
-						</button>
+						</button-->
 					</div>
 					</form>
 				</div>`;
@@ -290,6 +290,7 @@ function editEntryHTML(id)
 				$("#routine-pie-chart").css("width", w.toString() + "px");
 				$("#routine-pie-chart").css("height", (w * 0.4).toString() + "px");
 				buildRoutinePieChart(routine);
+				$("#entry-reminder-input").on("change", validateReminder);
 			},
 			100
 		);
@@ -330,6 +331,32 @@ function fadeTopEntryInput(val)
 		$(".bar-header-secondary").css("display", "inline-block");
 		$(".bar-header-secondary").css("opacity", "0");
 		$(".bar-header-secondary").animate({ opacity : 1}, 600);
+	}
+}
+
+
+function validateReminder()
+{
+	var newVal = $("#entry-reminder-input").val();
+
+	if (newVal !== "--:--")
+	{
+		var id = $("#entry-reminder-input").attr("data-source");
+		var routine = HABITS[id];
+
+		if (routine !== null && (routine instanceof Routine))
+		{
+			if (newVal === routine.getReminder())
+				return;
+		
+			routine.setReminder(newVal);
+			commitChanges();
+				
+
+			editEntryHTML(id);
+			reinitializeNotificationService();
+			buildCalendar();
+		}
 	}
 }
 
@@ -410,7 +437,7 @@ function buildStatsChart()
               "lineColor" : getRandomColor()
           }, {
               "balloonText": "Expected for « [[caption]] »: [[value]] times",
-              "fillAlphas": 1,
+              "fillAlphas": 0.6,
               "lineAlpha": 1,
               "title": "Expected",
               "type": "column",
@@ -704,24 +731,31 @@ function isCordovaNotificationLocalAvailable()
 
 function createNotification(scheduledId) 
 {
-	
-	var routine = HABITS[NOTIFICATIONDICT[scheduledId.toString()]];
-
-	if (routine !== null && (routine instanceof Routine))
+	if (typeof(NOTIFICATIONDICT[scheduledId.toString()]) !== "undefined")
 	{
-		var opts = {
-			message: '"' + routine.getCaption() + '" scheduled at ' + routine.getReminder(),
-			title: 'Sticky Routine - Reminder',
-			type: 'basic',
-			iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
-		};
+		var routineIds = NOTIFICATIONDICT[scheduledId.toString()].toString().split(",");
 
-		if (isChromeAlarmsAvailable())
+		for (var i = 0; i < routineIds.length; i++)
 		{
-			chrome.notifications.create(scheduledId.toString(), opts, function(notificationId) { });
-		}
+			var routine = HABITS[routineIds[i]];
 
-		
+			if (routine !== null && (routine instanceof Routine))
+			{
+				var opts = {
+					message: '"' + routine.getCaption() + '" scheduled at ' + routine.getReminder(),
+					title: 'Sticky Routine - Reminder',
+					type: 'basic',
+					iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
+				};
+
+				if (isChromeAlarmsAvailable())
+				{
+					chrome.notifications.create(routine.id(), opts, function(notificationId) { });
+				}
+
+				
+			}
+		}
 	}
 }
 
@@ -735,11 +769,11 @@ function createAlarm(routineId, date)
 			message: '"' + routine.getCaption() + '" scheduled at ' + routine.getReminder(),
 			title: 'Sticky Routine - Reminder',
 			type: 'basic',
-			iconUrl: 'res/icon/android/drawable-ldpi-icon.png'
+			iconUrl: 'file://res/icon/android/drawable-ldpi-icon.png'
 		};
 
 		
-		var idSchedule = date.getTime();
+		var idSchedule = hashCode(routine.id());
 		if (isCordovaNotificationLocalAvailable())
 		{
 			
@@ -749,6 +783,8 @@ function createAlarm(routineId, date)
 			    text: opts.message,
 			    at: date,
 			    sound: "file://sounds/alarm.mp3",
+			    badge: 1,
+			    smallIcon: opts.iconUrl,
 			    icon: opts.iconUrl
 			});
 			return idSchedule.toString();
@@ -812,7 +848,11 @@ function registerAlarm(routine)
 	if (presentTime.getTime() < tmp.getTime())
 	{
 		var scheduleId = tmp.getTime().toString();
-		NOTIFICATIONDICT[scheduleId] = routine.id();
+		if (typeof(NOTIFICATIONDICT[scheduleId]) === "undefined")
+			NOTIFICATIONDICT[scheduleId] = routine.id();
+		else
+			NOTIFICATIONDICT[scheduleId] = NOTIFICATIONDICT[scheduleId] + "," + routine.id();
+
 		var scheduledTime = createAlarm(routine.id(), tmp);
 	}
 
@@ -823,18 +863,16 @@ function registerAlarm(routine)
 function reinitializeNotificationService()
 {
 
-	if (Object.keys(HABITS).length === 0)
+	if (typeof(HABITS) === "undefined" || Object.keys(HABITS).length === 0)
 	{
 		initService();
 	}
 
 	if (isCordovaNotificationLocalAvailable())
 	{
-		for (key in NOTIFICATIONDICT)
-		{
-			cordova.plugins.notification.local.cancel(Number(key), function () {});
-			cordova.plugins.notification.local.clear(Number(key), function () {});
-		}
+		cordova.plugins.notification.local.cancelAll();
+		cordova.plugins.notification.local.clearAll();
+		
 
 		cordova.plugins.notification.local.on("trigger", function (notification) {
 			setTimeout(
@@ -851,13 +889,12 @@ function reinitializeNotificationService()
 	{
 		if (isChromeAlarmsAvailable())
 		{
-			for (key in NOTIFICATIONDICT)
-			{
-				chrome.alarms.clear(key.toString());
-			}
+
+			chrome.alarms.clearAll();
+			
 			chrome.alarms.onAlarm.addListener(function(alarm) {
 			    createNotification(alarm.name);
-			  });
+			});
 		}
 	}
 	
@@ -875,6 +912,8 @@ function reinitializeNotificationService()
 			}
 		}
 	}
+
+	localStorage.setItem(app_id + ".notification", JSON.stringify(NOTIFICATIONDICT));
 }
 
 
@@ -1204,33 +1243,16 @@ function clickPerformed(evt)
 
 	else if (lastClickedObject.is("span#btn-validate-reminder"))
 	{
-		var newVal = $("#entry-reminder-input").val();
-
-		if (newVal !== "--:--")
-		{
-			var id = $("#entry-reminder-input").attr("data-source");
-			var routine = HABITS[id];
-
-			if (routine !== null && (routine instanceof Routine))
-			{
-				if (newVal === routine.getReminder())
-					return;
-			
-				routine.setReminder(newVal);
-				commitChanges();
-					
-
-				editEntryHTML(id);
-				reinitializeNotificationService();
-				buildCalendar();
-			}
-		}
+		validateReminder();
 	}
 
 
 	else if (lastClickedObject.is("span#btn-validate-interval"))
 	{
-  		var newVal = Number($("#entry-interval-input").val());
+  		var newVal = Math.floor(Number($("#entry-interval-input").val()));
+  		if (newVal < 1)
+  			newVal = 1;
+
   		var id = $("#entry-interval-input").attr("data-source");
   		var routine = HABITS[id];
 
@@ -1245,7 +1267,7 @@ function clickPerformed(evt)
 	}
 
 	// click on calendar
-	else if (lastClickedObject.is('a.fc-day-grid-event'))
+	else if (lastClickedObject.is('a.fc-day-grid-event') || lastClickedObject.is('a.fc-time-grid-event') )
 	{
 		var classList = $(lastClickedObject).attr('class').split(/\s+/);
 		$.each(classList, function(index, item) {
@@ -1262,9 +1284,9 @@ function clickPerformed(evt)
 		    }
 		});
 	}
-	else if (lastClickedObject.is('span.fc-title'))
+	else if (lastClickedObject.is('.fc-title') || $(lastClickedObject).is("td.fc-list-item-title > a"))
 	{
-		var classList = $($(lastClickedObject).parent().parent()).attr('class').split(/\s+/);
+		var classList = $(lastClickedObject).parent().parent().attr('class').split(/\s+/);
 		$.each(classList, function(index, item) {
 		    if (!item.startsWith('fc-')) {
 		        $("li#menu-item-list-view").removeClass("checked");
@@ -1279,7 +1301,23 @@ function clickPerformed(evt)
 		    }
 		});
 	}
-	
+	else if (lastClickedObject.is('div.fc-bg')  || lastClickedObject.is('td.fc-list-item-title.fc-widget-content'))
+	{
+		var classList = $($(lastClickedObject).parent()).attr('class').split(/\s+/);
+		$.each(classList, function(index, item) {
+		    if (!item.startsWith('fc-')) {
+		        $("li#menu-item-list-view").removeClass("checked");
+		  		editEntryHTML(item);
+
+		  		var w = $(window).width();
+		  		$("#routine-detail-content").animate({ marginLeft : 0}, 600);
+				$("#listview-content").animate({ marginLeft : w}, 599);
+				$("#calendar-content").animate({ marginLeft : w * 2}, 600);
+				$("#stats-content").animate({ marginLeft : w * 3}, 600);
+				fadeTopEntryInput("out");
+		    }
+		});
+	}
 }
 
 function tapholdEventHandler(evt)
