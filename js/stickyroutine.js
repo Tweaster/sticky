@@ -361,6 +361,83 @@ function validateReminder()
 }
 
 
+
+function congratulate()
+{
+	var html = `
+	<div class="medal-container">
+		<div class="medal-img-container"><img src="images/medal0{0}.png"></div>
+		<div class="congratulation-text-container">
+			<p>{1}! {2}!</p>
+		</div>
+	</div>
+
+	`;
+
+	var streak = 0;
+	var d = new Date();
+
+	var keys = Object.keys(HABITS);
+
+	while(true)
+	{
+		var breakWhile = false;
+		for(var i = 0; i < keys.length; i++)
+		{
+			var routine = HABITS[keys[i]];
+			if (routine !== null && (routine instanceof Routine))
+			{
+				if (routine.isExpected(d) && !routine.isChecked(d))
+				{
+					breakWhile = true;
+					break;
+				}
+			}
+		}
+		if (!breakWhile)
+		{
+			streak++;
+			d = new Date(d.getTime() - 86400000);
+			if (streak > 300)
+				break;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+
+
+	var t = ["Awesome", "Congratulation my friend", "You rock", "Keep the good efforts", "You can be proud of you", "Kudos", "Hurrahs"];
+	var i = Math.floor(Math.random() * 3) + 1;
+	var msg1 = t[Math.floor(Math.random() * t.length)];
+
+
+	if (streak !== 0)
+	{
+
+		var msg2 = "You have just accomplished all your goals for today";
+		if (streak > 1)
+		{
+			msg2 = "You have accomplished all your goals <span>" + streak.toString() + " days</span> in a row";
+		}
+
+
+		$("body").append(String.format(html, i.toString(), msg1, msg2));
+
+		setTimeout(
+			function()
+			{
+				$(".medal-container").remove();
+			},
+			5000
+		);
+	}
+
+}
+
+
 /******************************** CHARTS ****************************/
 
 
@@ -1021,6 +1098,8 @@ function clickPerformed(evt)
 		{
 			routine.tick();
 			commitChanges();
+
+			congratulate();
 		}
 	}
 

@@ -63,6 +63,49 @@ body{
 }
 
 
+.medal-container
+{
+  position: fixed;
+  top: 150px;
+  z-index: 100;
+  width: 100%;
+  display: block;
+  background-color: rgba(0, 0, 0, 0);
+}
+
+.medal-container > .medal-img-container
+{
+  position: relative;
+  display: block;
+  width: 128px;
+  padding-left: 50%;
+  margin-left: -64px;
+}
+
+.medal-container > .congratulation-text-container
+{
+  position: relative;
+  padding: 15px;
+  width: 300px;
+  left: 50%;
+  display: block;
+  margin-left: -150px;
+  margin-top: 15px;
+  border-radius: 8px;
+  background-color: rgba(26, 26, 26, 0.8);
+}
+
+.medal-container > .congratulation-text-container > p
+{
+  color: #fff;
+}
+
+.medal-container > .congratulation-text-container > p > span 
+{
+  font-weight: bold;
+}
+
+
 #ui-btn-settings-container {
     position: fixed;
     left: 100%;
